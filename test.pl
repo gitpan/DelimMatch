@@ -6,7 +6,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..46\n"; }
+BEGIN { $| = 1; print "1..47\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::DelimMatch;
 $loaded = 1;
@@ -166,6 +166,16 @@ if ($match eq '(this is) a test') {
     print "ok 46\n";
 } else {
     print "not ok 46 ($match)\n";
+}
+
+# test: multi-line matching with delimiter stripping
+
+$match = $mc->match("test ((this is)\na test) so there");
+
+if ($match eq "(this is)\na test") {
+    print "ok 47\n";
+} else {
+    print "not ok 47 ($match)\n";
 }
 
 exit;

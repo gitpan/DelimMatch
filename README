@@ -1,4 +1,4 @@
-README for DelimMatch version 1.05, 02 Oct 2002
+README for DelimMatch version 1.06, 20 May 2003
 
 DelimMatch allows you to match delimited substrings in a buffer.
 The delimiters can be specified with any regular expression and
@@ -12,6 +12,9 @@ contribute to the recognition of start and end delimiters.
 For more detail, see the POD documentation in DelimMatch.pm
 
 CHANGES
+
+2003/05/20: Released 1.06, fixed a couple of places where "/s" was missing
+            from the regex, preventing multi-line matches from working correctly.
 
 2002/10/02: Released 1.05, with the plan to actually upload this one to CPAN.
             No real changes from 1.04, just updates to documentation.
@@ -62,7 +65,7 @@ You will find additional contact information at http://nwalsh.com/
 
 COPYRIGHT
 
-Copyright (C) 1997-2002 Norman Walsh.
+Copyright (C) 1997-2003 Norman Walsh.
 All rights reserved.  This program is free software; you can 
 redistribute it and/or modify it under the same terms as Perl itself.
 

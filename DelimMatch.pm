@@ -563,9 +563,9 @@ sub strip_delim {
 
     $string = $self->{'MATCH'} if !defined($string);
 
-    if ($string =~ /^$start/) {
+    if ($string =~ /^$start/s) {
 	my($rest) = $';
-	if ($rest =~ /^(.*)$end$/) {
+	if ($rest =~ /^(.*)$end$/s) {
 	    return $1;
 	} else {
 	    $self->{'ERROR'} = "FAILED TO MATCH END DELIMITER";
