@@ -9,7 +9,7 @@ require AutoLoader;
 
 @ISA = qw(Exporter AutoLoader);
 @EXPORT = qw();
-$VERSION = '1.01';
+$VERSION = '1.05';
 
 sub new { 
     my $type  = shift;
@@ -35,6 +35,7 @@ sub new {
     $self->{'CASESENSE'}   = 0;	  # boolean
     $self->{'FORCESLOW'}   = 0;	  # boolean
     $self->{'KEEP'}	   = 1;	  # boolean
+    $self->{'RETURNDELIM'} = 1;   # boolean
 
     $self->{'BUFFER'}	   = "";
     $self->{'PRE'}	   = "";
@@ -191,6 +192,19 @@ sub keep {
     return $curkeep;
 }
 
+sub returndelim {
+    my $self	 = shift;
+    my $setrd	 = shift;
+    my $currd	 = $self->{'RETURNDELIM'};
+
+    $self->{'RETURNDELIM'} = $setrd || !defined($setrd);
+
+    print "RETURNDELIM : ", $self->{'RETURNDELIM'}, "\n"
+	if $self->{'DEBUG'};
+
+    return $currd;
+}
+
 sub debug {
     my $self	 = shift;
     my $setdebug = shift;
@@ -291,6 +305,7 @@ sub match {
     $self->{'POST'}   = "";
 
     if (!%quote && !$escape && !$dblesc && !$self->{'FORCESLOW'}) {
+	print "FAST: $start, $end\n" if $debug;
 	return $self->_fast0() if $start eq $end;
 	return $self->_fast1();
     }
@@ -438,6 +453,8 @@ sub match {
 	$pre   = $self->{'PRE'};
 	$match = $self->{'MATCH'};
 	$post  = $self->{'POST'};
+
+	$match = $self->strip_delim($match) if !$self->{'RETURNDELIM'};
     } else {
 	$self->{'PRE'}	 = "";
 	$self->{'MATCH'} = "";
@@ -460,7 +477,7 @@ sub _fast0 {
     my $self   = shift;
     my $delim  = $self->{'STARTREGEXP'};
     local $_   = $self->{'BUFFER'};
-    my ($match, $pre, $match, $post);
+    my ($pre, $match, $post);
 
     if ($self->{'CASESENSE'}) {
 	$match = /^(.*?)($delim.*?$delim)(.*)$/s;
@@ -471,6 +488,8 @@ sub _fast0 {
     }
 
     if ($match) {
+	$match = $self->strip_delim($match) if !$self->{'RETURNDELIM'};
+
 	if ($self->{'KEEP'}) {
 	    $self->{'PRE'}   = $pre;
 	    $self->{'MATCH'} = $match;
@@ -517,17 +536,45 @@ sub _fast1 {
 	}
 
 	if ($count == 0) {
+	    $matched = $self->strip_delim($matched) if !$self->{'RETURNDELIM'};
+
 	    if ($self->{'KEEP'}) {
 		$self->{'PRE'}	 = $realpre;
 		$self->{'MATCH'} = $matched;
 		$self->{'POST'}	 = $post;
 	    }
-
+	    
 	    return wantarray ? ($realpre, $matched, $post) : $matched;
 	}
     }
 
     return wantarray ? (undef, undef, undef) : undef;
+}
+
+sub strip_delim {
+    my $self   = shift;
+    my $string = shift;
+    my $start  = $self->{'STARTREGEXP'};
+    my $end    = $self->{'ENDREGEXP'};
+    my $ok     = 1;
+    local $_   = "no -w warning in evals now";
+
+    return if $self->{'ERROR'};
+
+    $string = $self->{'MATCH'} if !defined($string);
+
+    if ($string =~ /^$start/) {
+	my($rest) = $';
+	if ($rest =~ /^(.*)$end$/) {
+	    return $1;
+	} else {
+	    $self->{'ERROR'} = "FAILED TO MATCH END DELIMITER";
+	}
+    } else {
+	$self->{'ERROR'} = "FAILED TO MATCH START DELIMITER";
+    }
+
+    return;
 }
 
 sub _match {
@@ -597,6 +644,8 @@ Text::DelimMatch - Perl extension to find regexp delimited strings with proper n
   ($prefix, $match, $remainder) = $mc->match($string);
   ($prefix, $nextmatch, $remainder) = $mc->match();
 
+  $middle = $mc->strip_delim($match); # returns $match w/o start and end delim
+
 =head1 DESCRIPTION
 
 These routines allow you to match delimited substrings in a
@@ -638,6 +687,10 @@ In a scalar context, returns $match.
 If $string is not provided on subsequent calls, the $post from the 
 previous match is used, unless keep is false.  If keep is false, the
 match always fails.
+
+=item strip_delim $string
+
+Returns $string with the start and end delimiters removed.
 
 =item delim $start, $end
 
@@ -702,6 +755,15 @@ matching.  Keeping a local copy allows repeated matching on the same
 buffer, but might be a bad idea if the buffer is a terabyte long. ;-)
 
 Returns the keep setting in use before this call.
+
+=item returndelim $bool
+
+Sets returndelim to $bool or true if $bool is not specified.
+
+Returndelim, which is true by default, specifies whether or not the 
+start and end delimiters are returned with the matching string.
+
+Returns the returndelim setting in use before this call.
 
 =item error $seterr
 
@@ -790,11 +852,11 @@ See also test.pl in the distribution.
 
 =head1 AUTHOR
 
-Norman Walsh, norm@berkshire.net
+Norman Walsh, ndw@nwalsh.com
 
 =head1 COPYRIGHT
 
-Copyright (C) Small Planet Software and Norman Walsh.
+Copyright (C) 1997-2002 Norman Walsh.
 All rights reserved.  This program is free software; you can 
 redistribute it and/or modify it under the same terms as Perl itself.
 

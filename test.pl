@@ -6,7 +6,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..44\n"; }
+BEGIN { $| = 1; print "1..46\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::DelimMatch;
 $loaded = 1;
@@ -144,6 +144,29 @@ $mc->delim("\\(", "\\)");
        'pre ', '(match)', ' (match2) post');
 
 &test (44, undef);
+
+# test: strip delimiters
+
+$mc = new Text::DelimMatch '\(', '\)';
+$mc->returndelim(1);
+
+$match = $mc->match("test ((this is) a test) so there");
+
+if ($match eq '((this is) a test)') {
+    print "ok 45\n";
+} else {
+    print "not ok 45\n";
+}
+
+$mc->returndelim(0);
+
+$match = $mc->match("test ((this is) a test) so there");
+
+if ($match eq '(this is) a test') {
+    print "ok 46\n";
+} else {
+    print "not ok 46 ($match)\n";
+}
 
 exit;
 
